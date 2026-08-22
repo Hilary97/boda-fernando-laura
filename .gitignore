@@ -1,0 +1,5 @@
+# macOS local files
+.DS_Store
+
+# Local Pi runtime state
+.atl/
