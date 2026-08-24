@@ -1,5 +1,10 @@
 window.INVITATION_DATA = {
   copy: {
+    envelopeEyebrow: "Estás invitado",
+    envelopeNames: "Roman & Sofia",
+    envelopeDate: "18 abril 2026",
+    envelopeButtonText: "Abrir invitación",
+    envelopeSealInitials: "R & S",
     introEyebrow: "Invitación de boda",
     quinceName: "Roman & Sofia",
     introTitle: "Nos casamos",
@@ -39,8 +44,40 @@ window.INVITATION_DATA = {
     closingText:
       "Gracias por formar parte de nuestra celebración. Cada detalle está pensado para compartir una noche llena de amor, música y recuerdos.",
   },
+  music: {
+    // Add the final track at this path to enable automatic playback after opening.
+    enabled: true,
+    src: "assets/music/invitacion.mp3",
+    loop: true,
+    volume: 0.72,
+    labels: {
+      play: "Reproducir música",
+      pause: "Pausar música",
+      unavailable: "Música no disponible",
+      loading: "Preparando música",
+    },
+    buttonText: {
+      play: "Música",
+      pause: "Pausar",
+      unavailable: "Sin música",
+      loading: "Cargando",
+    },
+  },
+  envelope: {
+    audioEnabled: false,
+    motion: {
+      buttonFadeDuration: 0.28,
+      sealDuration: 0.48,
+      flapDuration: 0.88,
+      cardDuration: 0.95,
+      envelopeExitDuration: 0.72,
+      coverFadeDuration: 0.62,
+      reducedFadeDuration: 0.28,
+      flapOpenRotationX: -165,
+    },
+  },
   // Edit this ISO date/time to update the live countdown target.
-  countdownTarget: "2026-04-18T19:00:00-06:00",
+  countdownTarget: "2027-04-18T19:00:00-06:00",
   location: {
     // Update this Google Maps URL when the final venue location changes.
     mapsUrl:

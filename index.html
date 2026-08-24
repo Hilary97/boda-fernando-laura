@@ -10,8 +10,30 @@
     />
     <link rel="stylesheet" href="styles/main.css" />
   </head>
-  <body>
-    <main>
+  <body class="envelope-intro-pending">
+    <section class="envelope-intro" data-envelope-intro aria-labelledby="envelope-title">
+      <div class="envelope-intro__glow" aria-hidden="true"></div>
+      <div class="envelope-intro__content">
+        <p class="eyebrow envelope-intro__eyebrow" data-copy="envelopeEyebrow"></p>
+        <div class="envelope" data-envelope-shell aria-hidden="true">
+          <div class="envelope__back"></div>
+          <div class="envelope__inner-card" data-envelope-card>
+            <span data-copy="envelopeNames"></span>
+            <small data-copy="envelopeDate"></small>
+          </div>
+          <div class="envelope__top-flap" data-envelope-flap></div>
+          <div class="envelope__front"></div>
+          <div class="envelope__seal" data-envelope-seal>
+            <span data-copy="envelopeSealInitials"></span>
+          </div>
+        </div>
+        <h1 id="envelope-title" class="envelope-intro__title" data-copy="envelopeNames"></h1>
+        <p class="envelope-intro__date" data-copy="envelopeDate"></p>
+        <button class="envelope-intro__button" type="button" data-envelope-open data-copy="envelopeButtonText"></button>
+      </div>
+    </section>
+
+    <main class="invitation-content" data-invitation-content aria-hidden="true">
       <section class="scroll-section prelude" aria-labelledby="intro-title">
         <div class="prelude-media" aria-hidden="true">
           <img
@@ -151,6 +173,20 @@
         </div>
       </section>
     </main>
+
+    <audio data-music-audio preload="none" playsinline hidden></audio>
+    <button
+      class="music-toggle"
+      type="button"
+      data-music-toggle
+      aria-pressed="false"
+      aria-label="Música no disponible"
+      hidden
+      disabled
+    >
+      <span class="music-toggle__icon" data-music-icon aria-hidden="true">♪</span>
+      <span class="music-toggle__text" data-music-text>Música</span>
+    </button>
 
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"

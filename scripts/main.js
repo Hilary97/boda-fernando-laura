@@ -3,6 +3,8 @@ const data = window.INVITATION_DATA || {
   images: {},
   location: {},
   whatsapp: {},
+  envelope: {},
+  music: {},
 };
 
 const setTextContent = () => {
@@ -108,6 +110,303 @@ const initCountdown = () => {
 
   updateCountdown();
   return window.setInterval(updateCountdown, 1000);
+};
+
+const initInvitationMusic = () => {
+  const audio = document.querySelector("[data-music-audio]");
+  const button = document.querySelector("[data-music-toggle]");
+  const icon = button?.querySelector("[data-music-icon]");
+  const text = button?.querySelector("[data-music-text]");
+  const config = data.music || {};
+  const labels = {
+    play: "Reproducir música",
+    pause: "Pausar música",
+    unavailable: "Música no disponible",
+    loading: "Preparando música",
+    ...config.labels,
+  };
+  const buttonText = {
+    play: "Música",
+    pause: "Pausar",
+    unavailable: "Sin música",
+    loading: "Cargando",
+    ...config.buttonText,
+  };
+  const hasSource = Boolean(config.enabled && config.src);
+  let isAvailable = false;
+  let attemptedPlayback = false;
+
+  if (!audio || !button || button.dataset.musicInitialized === "true") {
+    return { playFromUserGesture: () => Promise.resolve(false) };
+  }
+
+  button.dataset.musicInitialized = "true";
+
+  const setButtonCopy = (state) => {
+    const isPlaying = state === "pause";
+    const isLoading = state === "loading";
+    const isUnavailable = state === "unavailable";
+
+    button.setAttribute("aria-pressed", String(isPlaying));
+    button.setAttribute("aria-label", labels[state]);
+    button.disabled = isUnavailable || isLoading;
+    button.hidden = !hasSource && isUnavailable;
+    button.classList.toggle("is-playing", isPlaying);
+    button.classList.toggle("is-unavailable", isUnavailable);
+
+    if (icon) {
+      icon.textContent = isPlaying ? "❚❚" : "♪";
+    }
+
+    if (text) {
+      text.textContent = buttonText[state];
+    }
+  };
+
+  const setAvailableState = (available) => {
+    isAvailable = available;
+
+    if (!hasSource || !available) {
+      setButtonCopy("unavailable");
+      return;
+    }
+
+    setButtonCopy(audio.paused ? "play" : "pause");
+  };
+
+  if (!hasSource) {
+    setAvailableState(false);
+    return { playFromUserGesture: () => Promise.resolve(false), setAvailableState };
+  }
+
+  audio.src = config.src;
+  audio.loop = config.loop !== false;
+  audio.volume = Number.isFinite(config.volume) ? config.volume : 0.72;
+  button.hidden = false;
+  setButtonCopy("loading");
+
+  const safelyPlay = () => {
+    attemptedPlayback = true;
+
+    if (!hasSource) {
+      setAvailableState(false);
+      return Promise.resolve(false);
+    }
+
+    const playResult = audio.play();
+
+    if (!playResult || typeof playResult.then !== "function") {
+      setAvailableState(true);
+      return Promise.resolve(true);
+    }
+
+    return playResult
+      .then(() => {
+        setAvailableState(true);
+        return true;
+      })
+      .catch(() => {
+        setAvailableState(false);
+        return false;
+      });
+  };
+
+  const playFromUserGesture = () => {
+    try {
+      return safelyPlay();
+    } catch (error) {
+      setAvailableState(false);
+      return Promise.resolve(false);
+    }
+  };
+
+  button.addEventListener("click", () => {
+    if (!isAvailable && attemptedPlayback) return;
+
+    if (audio.paused) {
+      playFromUserGesture();
+      return;
+    }
+
+    audio.pause();
+  });
+
+  audio.addEventListener("canplay", () => setAvailableState(true));
+  audio.addEventListener("playing", () => setButtonCopy("pause"));
+  audio.addEventListener("pause", () => setButtonCopy(isAvailable ? "play" : "unavailable"));
+  audio.addEventListener("ended", () => setButtonCopy("play"));
+  audio.addEventListener("error", () => setAvailableState(false));
+
+  audio.load();
+
+  return { playFromUserGesture, setAvailableState };
+};
+
+let invitationMusic = null;
+
+const maybePlayEnvelopeAudio = () => {
+  try {
+    const audioResult = invitationMusic?.playFromUserGesture?.();
+
+    if (audioResult && typeof audioResult.catch === "function") {
+      audioResult.catch(() => {});
+    }
+  } catch (error) {
+    // Music should never block opening the invitation.
+  }
+};
+
+const initEnvelopeIntro = () => {
+  const root = document.querySelector("[data-envelope-intro]");
+  const invitation = document.querySelector("[data-invitation-content]");
+
+  if (!root || !invitation || !window.gsap) {
+    document.body.classList.remove("envelope-intro-pending", "envelope-intro-opening");
+    invitation?.removeAttribute("aria-hidden");
+    return null;
+  }
+
+  const elements = {
+    shell: root.querySelector("[data-envelope-shell]"),
+    flap: root.querySelector("[data-envelope-flap]"),
+    card: root.querySelector("[data-envelope-card]"),
+    seal: root.querySelector("[data-envelope-seal]"),
+    button: root.querySelector("[data-envelope-open]"),
+  };
+
+  if (Object.values(elements).some((element) => !element)) {
+    document.body.classList.remove("envelope-intro-pending", "envelope-intro-opening");
+    invitation.removeAttribute("aria-hidden");
+    return null;
+  }
+
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  const motion = {
+    buttonFadeDuration: 0.28,
+    sealDuration: 0.48,
+    flapDuration: 0.88,
+    cardDuration: 0.95,
+    envelopeExitDuration: 0.72,
+    coverFadeDuration: 0.62,
+    reducedFadeDuration: 0.28,
+    flapOpenRotationX: -165,
+    ...data.envelope?.motion,
+  };
+  let isOpening = false;
+  let timeline = null;
+
+  const revealInvitation = () => {
+    invitation.removeAttribute("aria-hidden");
+    document.body.classList.remove("envelope-intro-pending", "envelope-intro-opening");
+    root.setAttribute("aria-hidden", "true");
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    if (window.ScrollTrigger) {
+      window.ScrollTrigger.refresh();
+    }
+  };
+
+  const finishIntro = () => {
+    revealInvitation();
+    gsap.set(root, { autoAlpha: 0, pointerEvents: "none" });
+    timeline?.kill();
+  };
+
+  const openInvitation = () => {
+    if (isOpening) return;
+
+    isOpening = true;
+    elements.button.disabled = true;
+    document.body.classList.add("envelope-intro-opening");
+    maybePlayEnvelopeAudio();
+
+    if (prefersReducedMotion) {
+      gsap.to(root, {
+        autoAlpha: 0,
+        duration: motion.reducedFadeDuration,
+        ease: "power1.out",
+        overwrite: "auto",
+        onComplete: finishIntro,
+      });
+      return;
+    }
+
+    timeline = gsap.timeline({
+      defaults: { ease: "power3.out" },
+      onComplete: finishIntro,
+    });
+
+    timeline
+      .to(elements.button, {
+        autoAlpha: 0,
+        y: 10,
+        duration: motion.buttonFadeDuration,
+        overwrite: "auto",
+      })
+      .to(
+        elements.seal,
+        {
+          autoAlpha: 0,
+          scale: 0.24,
+          rotation: 28,
+          duration: motion.sealDuration,
+          ease: "back.in(1.6)",
+        },
+        "<0.06",
+      )
+      .to(
+        elements.flap,
+        {
+          rotationX: motion.flapOpenRotationX,
+          z: 18,
+          duration: motion.flapDuration,
+          ease: "power3.inOut",
+        },
+        ">-0.12",
+      )
+      .set(elements.flap, { zIndex: 1 }, ">-0.18")
+      .to(
+        elements.card,
+        {
+          yPercent: -58,
+          scale: 1.08,
+          z: 62,
+          duration: motion.cardDuration,
+          ease: "back.out(1.35)",
+        },
+        "<",
+      )
+      .to(
+        elements.shell,
+        {
+          y: 90,
+          scale: 0.92,
+          autoAlpha: 0,
+          duration: motion.envelopeExitDuration,
+          ease: "power3.in",
+        },
+        ">-0.08",
+      )
+      .to(
+        root,
+        {
+          autoAlpha: 0,
+          duration: motion.coverFadeDuration,
+          ease: "power2.inOut",
+        },
+        "<0.12",
+      );
+  };
+
+  gsap.set(invitation, { autoAlpha: 1 });
+  gsap.set(elements.card, { yPercent: 8, scale: 0.96, z: 0 });
+  gsap.set(elements.flap, { rotationX: 0, z: 0, transformOrigin: "50% 0%" });
+  gsap.set(elements.seal, { xPercent: -50, transformOrigin: "50% 50%" });
+  elements.button.addEventListener("click", openInvitation, { once: true });
+
+  return { openInvitation };
 };
 
 const initReducedMotionState = (elements) => {
@@ -591,3 +890,5 @@ setWhatsAppLinks();
 setMapLinks();
 initCountdown();
 initAnimations();
+invitationMusic = initInvitationMusic();
+initEnvelopeIntro();
