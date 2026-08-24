@@ -403,7 +403,7 @@ const initEnvelopeIntro = () => {
   gsap.set(invitation, { autoAlpha: 1 });
   gsap.set(elements.card, { yPercent: 8, scale: 0.96, z: 0 });
   gsap.set(elements.flap, { rotationX: 0, z: 0, transformOrigin: "50% 0%" });
-  gsap.set(elements.seal, { xPercent: -50, transformOrigin: "50% 50%" });
+  gsap.set(elements.seal, { transformOrigin: "50% 50%" });
   elements.button.addEventListener("click", openInvitation, { once: true });
 
   return { openInvitation };

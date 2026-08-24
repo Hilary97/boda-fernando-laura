@@ -190,7 +190,7 @@ body.envelope-intro-pending .invitation-content {
 
 .envelope__seal {
   left: 50%;
-  top: 51%;
+  top: 57%;
   z-index: 6;
   width: clamp(3.3rem, 11vw, 4.9rem);
   aspect-ratio: 1;
@@ -207,7 +207,12 @@ body.envelope-intro-pending .invitation-content {
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(0.95rem, 3vw, 1.35rem);
   letter-spacing: 0.12em;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
+}
+
+.envelope__seal span {
+  display: block;
+  transform: translateX(0.06em);
 }
 
 .envelope-intro__title {
@@ -1011,6 +1016,11 @@ figure {
     min-height: 3rem;
     padding-right: 0.85rem;
     font-size: 0.68rem;
+  }
+
+  .envelope__seal {
+    left: 50%;
+    top: 58%;
   }
 }
 
