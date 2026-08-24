@@ -244,6 +244,10 @@ const initInvitationMusic = () => {
 
 let invitationMusic = null;
 
+const scrollInvitationToStart = () => {
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+};
+
 const maybePlayEnvelopeAudio = () => {
   try {
     const audioResult = invitationMusic?.playFromUserGesture?.();
@@ -301,11 +305,15 @@ const initEnvelopeIntro = () => {
     invitation.removeAttribute("aria-hidden");
     document.body.classList.remove("envelope-intro-pending", "envelope-intro-opening");
     root.setAttribute("aria-hidden", "true");
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    scrollInvitationToStart();
 
-    if (window.ScrollTrigger) {
-      window.ScrollTrigger.refresh();
-    }
+    window.requestAnimationFrame(() => {
+      scrollInvitationToStart();
+
+      if (window.ScrollTrigger) {
+        window.ScrollTrigger.refresh();
+      }
+    });
   };
 
   const finishIntro = () => {
@@ -319,6 +327,7 @@ const initEnvelopeIntro = () => {
 
     isOpening = true;
     elements.button.disabled = true;
+    scrollInvitationToStart();
     document.body.classList.add("envelope-intro-opening");
     maybePlayEnvelopeAudio();
 
@@ -400,6 +409,11 @@ const initEnvelopeIntro = () => {
       );
   };
 
+  if ("scrollRestoration" in window.history) {
+    window.history.scrollRestoration = "manual";
+  }
+
+  scrollInvitationToStart();
   gsap.set(invitation, { autoAlpha: 1 });
   gsap.set(elements.card, { yPercent: 8, scale: 0.96, z: 0 });
   gsap.set(elements.flap, { rotationX: 0, z: 0, transformOrigin: "50% 0%" });
