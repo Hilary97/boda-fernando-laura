@@ -455,22 +455,22 @@ const buildCinematicTimeline = (elements) => {
     autoAlpha: 0,
     scale: 0.5,
     z: -260,
-    filter: "blur(16px)",
+    filter: "blur(8px)",
     transformOrigin: "50% 50%",
   });
-  gsap.set(elements.subtitle, { autoAlpha: 0, y: 34, filter: "blur(8px)" });
+  gsap.set(elements.subtitle, { autoAlpha: 0, y: 34, filter: "blur(4px)" });
   gsap.set(elements.kicker, { autoAlpha: 0, y: 18 });
   gsap.set(elements.heroFrame, {
     autoAlpha: 0,
     yPercent: 8,
     scale: 0.82,
-    filter: "blur(8px)",
+    filter: "blur(4px)",
   });
   gsap.set(elements.imageCards, {
     autoAlpha: 0,
     y: 40,
     scale: 0.9,
-    filter: "blur(8px)",
+    filter: "blur(4px)",
   });
   gsap.set([elements.halo, elements.ring], { transformOrigin: "50% 50%" });
 
@@ -495,7 +495,7 @@ const buildCinematicTimeline = (elements) => {
         autoAlpha: 0.16,
         scale: 0.62,
         z: -180,
-        filter: "blur(12px)",
+        filter: "blur(7px)",
         duration: 2,
       },
       "suspense",
@@ -599,12 +599,12 @@ const buildCinematicTimeline = (elements) => {
     .addLabel("transition")
     .to(
       elements.title,
-      { autoAlpha: 0, scale: 3.1, z: 520, filter: "blur(7px)", duration: 1.45 },
+      { autoAlpha: 0, scale: 3.1, z: 520, filter: "blur(4px)", duration: 1.45 },
       "transition",
     )
     .to(
       [elements.subtitle, elements.kicker],
-      { autoAlpha: 0, y: -28, filter: "blur(6px)", duration: 0.9 },
+      { autoAlpha: 0, y: -28, filter: "blur(3px)", duration: 0.9 },
       "transition+=0.15",
     )
     .to(
@@ -613,7 +613,7 @@ const buildCinematicTimeline = (elements) => {
         autoAlpha: 0,
         yPercent: -8,
         scale: 1.18,
-        filter: "blur(6px)",
+        filter: "blur(3px)",
         duration: 1.2,
       },
       "transition",
@@ -624,7 +624,7 @@ const buildCinematicTimeline = (elements) => {
         autoAlpha: 0,
         y: -26,
         scale: 1.08,
-        filter: "blur(6px)",
+        filter: "blur(3px)",
         stagger: 0.12,
         duration: 0.95,
       },
@@ -701,14 +701,14 @@ const initPinnedPreludeTransition = (elements) => {
         autoAlpha: 0,
         y: -38,
         scale: 1.08,
-        filter: "blur(16px)",
+        filter: "blur(8px)",
         duration: 0.55,
       },
       0.45,
     )
     .to(
       elements.preludeCopyItems,
-      { y: -20, filter: "blur(11px)", stagger: 0.035, duration: 0.42 },
+      { y: -20, filter: "blur(5px)", stagger: 0.035, duration: 0.42 },
       0.5,
     )
     .to(
@@ -716,7 +716,7 @@ const initPinnedPreludeTransition = (elements) => {
       {
         autoAlpha: 0.18,
         scale: 1.16,
-        filter: "blur(8px) saturate(0.7) brightness(0.42)",
+        filter: "blur(4px) saturate(0.7) brightness(0.42)",
         duration: 0.4,
       },
       0.6,
@@ -739,7 +739,7 @@ const buildCinematicPanelTimeline = (panel) => {
     autoAlpha: 0.18,
     y: 48,
     scale: 0.92,
-    filter: "blur(16px)",
+    filter: "blur(6px)",
     transformOrigin: "50% 55%",
   });
 
@@ -786,7 +786,7 @@ const buildCinematicPanelTimeline = (panel) => {
       autoAlpha: 0,
       y: -42,
       scale: 1.12,
-      filter: "blur(14px)",
+      filter: "blur(6px)",
       stagger: 0.08,
       duration: 1.05,
     },
@@ -813,7 +813,7 @@ const initSectionReveals = (elements) => {
     autoAlpha: 0,
     y: 54,
     scale: 0.965,
-    filter: "blur(14px)",
+    filter: "blur(5px)",
     transformOrigin: "50% 56%",
   });
 
