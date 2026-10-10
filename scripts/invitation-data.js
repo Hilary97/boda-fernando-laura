@@ -43,7 +43,7 @@ window.INVITATION_DATA = {
     venueAddress: "Av. Celebración 123, Ciudad de México",
     venueMapButtonLabel: "Ver ubicación",
     venueTimeLabel: "Ceremonia",
-    venueTime: "Templo San Felipe Apostol· 12:00 PM",
+    venueTime: "Templo San Felipe Apóstol · 12:00 PM",
     venueNote:
       "Te esperamos con unos minutos de anticipación para iniciar juntos esta historia.",
     rsvpEyebrow: "Confirma tu asistencia",
