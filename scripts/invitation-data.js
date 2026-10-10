@@ -100,7 +100,7 @@ window.INVITATION_DATA = {
   },
   whatsapp: {
     number: "3334659074",
-    message: "Hola, confirmo mi asistencia a la boda de Fernando y Laura.",
+    message: "Hola, confirmo mi asistencia gracias por invitarme ♥️.",
   },
   gallery: {
     // The first 3 images are the previews shown in the section; the lightbox shows all of them.
