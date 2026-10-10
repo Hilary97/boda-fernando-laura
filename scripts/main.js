@@ -64,10 +64,22 @@ const setWhatsAppLinks = () => {
 };
 
 const setMapLinks = () => {
-  const mapsUrl = data.location?.mapsUrl || "#";
+  const mapUrls = {
+    venue: data.location?.mapsUrl,
+    ceremony: data.location?.ceremonyMapsUrl,
+  };
 
   document.querySelectorAll("[data-map-link]").forEach((link) => {
-    link.href = mapsUrl;
+    const url = mapUrls[link.dataset.mapLink || "venue"];
+
+    // Hide buttons without a configured URL instead of linking nowhere.
+    if (!url) {
+      link.hidden = true;
+      return;
+    }
+
+    link.hidden = false;
+    link.href = url;
   });
 };
 
@@ -741,13 +753,66 @@ const initPinnedPreludeTransition = (elements) => {
 
 const getCinematicPanelItems = (panel) =>
   gsap.utils.toArray(
-    panel.querySelectorAll(".section-copy, .detail-card, .rsvp-panel"),
+    panel.querySelectorAll(
+      ".section-copy, .detail-card, .rsvp-panel, .gallery-preview",
+    ),
   );
+
+// Reveals panel items one at a time in the same spot, so tall content fits one viewport.
+const buildSequencedPanelTimeline = (panel, panelItems) => {
+  panel.classList.add("is-sequenced");
+
+  gsap.set(panelItems, {
+    autoAlpha: 0,
+    y: 48,
+    scale: 0.92,
+    filter: "blur(6px)",
+    transformOrigin: "50% 55%",
+  });
+
+  const panelTimeline = gsap.timeline({
+    defaults: { ease: "none" },
+    scrollTrigger: {
+      trigger: panel,
+      start: "top top",
+      end: `+=${panelItems.length * 120}%`,
+      pin: true,
+      scrub: 1,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+    },
+  });
+
+  panelItems.forEach((item, index) => {
+    panelTimeline
+      .to(item, {
+        autoAlpha: 1,
+        y: 0,
+        scale: 1,
+        filter: "blur(0px)",
+        duration: 1,
+      })
+      .to(item, { scale: 1.02, y: -4, duration: 0.8 })
+      .to(item, {
+        autoAlpha: 0,
+        y: -42,
+        scale: 1.08,
+        filter: "blur(6px)",
+        duration: index === panelItems.length - 1 ? 1.05 : 0.8,
+      });
+  });
+
+  return panelTimeline;
+};
 
 const buildCinematicPanelTimeline = (panel) => {
   const panelItems = getCinematicPanelItems(panel);
 
   if (panelItems.length === 0) return null;
+
+  if (panel.hasAttribute("data-panel-sequence")) {
+    return buildSequencedPanelTimeline(panel, panelItems);
+  }
 
   gsap.set(panelItems, {
     autoAlpha: 0.18,
@@ -852,6 +917,286 @@ const initSectionReveals = (elements) => {
   });
 };
 
+const fillTemplate = (template, values) =>
+  String(template ?? "").replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match);
+
+// Shows the placeholder card while an image is missing and removes it once it loads.
+const bindImagePlaceholder = (image, container) => {
+  image.addEventListener("error", () => container.classList.add("is-placeholder"));
+  image.addEventListener("load", () => container.classList.remove("is-placeholder"));
+};
+
+const initGallery = () => {
+  const section = document.querySelector(".gallery-section");
+  const images = data.gallery?.images || [];
+
+  if (!section) return null;
+
+  if (images.length === 0) {
+    // Removed (not just hidden) so the pinned panel timeline is never created for it.
+    section.remove();
+    return null;
+  }
+
+  const copy = data.copy || {};
+  const total = images.length;
+  const placeholderText = copy.galleryPlaceholder || "";
+  const items = Array.from(section.querySelectorAll(".gallery-item"));
+  const lightbox = document.querySelector("[data-gallery-lightbox]");
+  const closeButton = lightbox?.querySelector("[data-gallery-close]");
+  const prevButton = lightbox?.querySelector("[data-gallery-prev]");
+  const nextButton = lightbox?.querySelector("[data-gallery-next]");
+  const figure = lightbox?.querySelector("[data-gallery-figure]");
+  const lightboxImage = lightbox?.querySelector("[data-gallery-image]");
+  const counter = lightbox?.querySelector("[data-gallery-counter]");
+
+  if (!lightbox || !closeButton || !prevButton || !nextButton || !figure || !lightboxImage || !counter) {
+    return null;
+  }
+
+  const swipeThreshold = 40;
+  const getReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const canAnimate = () => Boolean(window.gsap) && !getReducedMotion();
+  let currentIndex = 0;
+  let isOpen = false;
+  let lastTrigger = null;
+  let renderToken = 0;
+  let touchStart = null;
+
+  items.forEach((item, index) => {
+    const image = item.querySelector("img");
+    const entry = images[index];
+
+    if (!entry) {
+      item.hidden = true;
+      return;
+    }
+
+    item.dataset.placeholder = placeholderText;
+    item.setAttribute(
+      "aria-label",
+      fillTemplate(copy.galleryOpenLabel, { current: index + 1, total }),
+    );
+    bindImagePlaceholder(image, item);
+    image.src = entry.src;
+    image.alt = entry.alt || "";
+
+    if (index === items.length - 1 && total > items.length) {
+      const badge = document.createElement("span");
+      badge.className = "gallery-item__more";
+      badge.setAttribute("aria-hidden", "true");
+      badge.textContent = `+${total - items.length}`;
+      item.append(badge);
+    }
+
+    item.addEventListener("click", () => openLightbox(index, item));
+  });
+
+  lightbox.setAttribute("aria-label", copy.galleryLightboxLabel || lightbox.getAttribute("aria-label"));
+  closeButton.setAttribute("aria-label", copy.galleryCloseLabel || "");
+  prevButton.setAttribute("aria-label", copy.galleryPrevLabel || "");
+  nextButton.setAttribute("aria-label", copy.galleryNextLabel || "");
+  figure.dataset.placeholder = placeholderText;
+  bindImagePlaceholder(lightboxImage, figure);
+
+  if (total < 2) {
+    prevButton.hidden = true;
+    nextButton.hidden = true;
+  }
+
+  const wrapIndex = (index) => (index + total) % total;
+
+  const preloadNeighbors = (index) => {
+    [wrapIndex(index + 1), wrapIndex(index - 1)].forEach((neighbor) => {
+      const preloader = new Image();
+      preloader.src = images[neighbor].src;
+    });
+  };
+
+  const renderImage = (index, animate) => {
+    const token = ++renderToken;
+
+    const apply = () => {
+      if (token !== renderToken) return;
+
+      const entry = images[index];
+
+      figure.classList.remove("is-placeholder");
+      lightboxImage.alt = entry.alt || "";
+      lightboxImage.src = entry.src;
+
+      if (lightboxImage.complete && lightboxImage.naturalWidth > 0) {
+        figure.classList.remove("is-placeholder");
+      }
+
+      counter.textContent = fillTemplate(copy.galleryCounter, {
+        current: index + 1,
+        total,
+      });
+      preloadNeighbors(index);
+
+      if (animate) {
+        gsap.to(figure, { autoAlpha: 1, duration: 0.25, ease: "power1.out", overwrite: true });
+      }
+    };
+
+    if (animate) {
+      gsap.to(figure, {
+        autoAlpha: 0,
+        duration: 0.14,
+        ease: "power1.in",
+        overwrite: true,
+        onComplete: apply,
+      });
+      return;
+    }
+
+    apply();
+  };
+
+  const goTo = (index) => {
+    currentIndex = wrapIndex(index);
+    renderImage(currentIndex, canAnimate());
+  };
+
+  function openLightbox(index, trigger) {
+    if (isOpen) return;
+
+    isOpen = true;
+    lastTrigger = trigger;
+    currentIndex = wrapIndex(index);
+    lightbox.hidden = false;
+    document.body.classList.add("gallery-open");
+
+    if (window.gsap) {
+      gsap.killTweensOf([lightbox, figure]);
+      gsap.set(figure, { clearProps: "opacity,visibility" });
+    }
+
+    renderImage(currentIndex, false);
+
+    if (canAnimate()) {
+      gsap.fromTo(
+        lightbox,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: "power2.out", overwrite: true },
+      );
+      gsap.fromTo(
+        figure,
+        { scale: 0.96 },
+        { scale: 1, duration: 0.35, ease: "power2.out", clearProps: "transform" },
+      );
+    } else if (window.gsap) {
+      gsap.set(lightbox, { clearProps: "opacity" });
+    }
+
+    closeButton.focus({ preventScroll: true });
+  }
+
+  const closeLightbox = () => {
+    if (!isOpen) return;
+
+    isOpen = false;
+    renderToken += 1;
+    document.body.classList.remove("gallery-open");
+
+    const finish = () => {
+      lightbox.hidden = true;
+
+      if (window.gsap) {
+        gsap.set(lightbox, { clearProps: "opacity" });
+        gsap.set(figure, { clearProps: "opacity,visibility,transform" });
+      }
+    };
+
+    if (canAnimate()) {
+      gsap.to(lightbox, {
+        opacity: 0,
+        duration: 0.25,
+        ease: "power1.in",
+        overwrite: true,
+        onComplete: finish,
+      });
+    } else {
+      finish();
+    }
+
+    lastTrigger?.focus({ preventScroll: true });
+  };
+
+  const trapFocus = (event) => {
+    const focusable = Array.from(lightbox.querySelectorAll("button")).filter(
+      (button) => !button.hidden && !button.disabled,
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (!lightbox.contains(document.activeElement)) {
+      event.preventDefault();
+      first.focus();
+    } else if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  document.addEventListener("keydown", (event) => {
+    if (!isOpen) return;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeLightbox();
+    } else if (event.key === "ArrowLeft") {
+      goTo(currentIndex - 1);
+    } else if (event.key === "ArrowRight") {
+      goTo(currentIndex + 1);
+    } else if (event.key === "Tab") {
+      trapFocus(event);
+    }
+  });
+
+  closeButton.addEventListener("click", closeLightbox);
+  prevButton.addEventListener("click", () => goTo(currentIndex - 1));
+  nextButton.addEventListener("click", () => goTo(currentIndex + 1));
+
+  lightbox.addEventListener("click", (event) => {
+    if (event.target.closest("button, figure, .gallery-lightbox__counter")) return;
+
+    closeLightbox();
+  });
+
+  lightbox.addEventListener(
+    "touchstart",
+    (event) => {
+      const touch = event.changedTouches[0];
+      touchStart = { x: touch.clientX, y: touch.clientY };
+    },
+    { passive: true },
+  );
+
+  lightbox.addEventListener(
+    "touchend",
+    (event) => {
+      if (!touchStart) return;
+
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - touchStart.x;
+      const deltaY = touch.clientY - touchStart.y;
+      touchStart = null;
+
+      if (Math.abs(deltaX) < swipeThreshold || Math.abs(deltaX) < Math.abs(deltaY)) return;
+
+      goTo(currentIndex + (deltaX < 0 ? 1 : -1));
+    },
+    { passive: true },
+  );
+
+  return { open: openLightbox, close: closeLightbox };
+};
+
 const initAnimations = () => {
   gsap.registerPlugin(ScrollTrigger);
 
@@ -872,7 +1217,7 @@ const initAnimations = () => {
     imageCards: gsap.utils.toArray(".image-card"),
     cinematicPanels: gsap.utils.toArray(".cinematic-panel"),
     cinematicPanelItems: gsap.utils.toArray(
-      ".cinematic-panel .section-copy, .cinematic-panel .detail-card, .cinematic-panel .rsvp-panel",
+      ".cinematic-panel .section-copy, .cinematic-panel .detail-card, .cinematic-panel .rsvp-panel, .cinematic-panel .gallery-preview",
     ),
     revealItems: gsap.utils.toArray(".scroll-reveal"),
   };
@@ -884,13 +1229,22 @@ const initAnimations = () => {
   if (prefersReducedMotion) {
     initReducedMotionState(elements);
   } else {
-    const [countdownPanel, ...remainingCinematicPanels] =
-      elements.cinematicPanels;
+    // Pinned triggers must be created in document order, so split panels around the scene.
+    const isBeforeScene = (panel) =>
+      Boolean(elements.scene) &&
+      Boolean(
+        panel.compareDocumentPosition(elements.scene) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    const panelsBeforeScene = elements.cinematicPanels.filter(isBeforeScene);
+    const panelsAfterScene = elements.cinematicPanels.filter(
+      (panel) => !isBeforeScene(panel),
+    );
 
     initPinnedPreludeTransition(elements);
-    initCinematicPanels([countdownPanel].filter(Boolean));
+    initCinematicPanels(panelsBeforeScene);
     buildCinematicTimeline(elements);
-    initCinematicPanels(remainingCinematicPanels);
+    initCinematicPanels(panelsAfterScene);
     initSectionReveals(elements);
     window.addEventListener("load", () => ScrollTrigger.refresh(), {
       once: true,
@@ -903,6 +1257,7 @@ setImageSources();
 setWhatsAppLinks();
 setMapLinks();
 initCountdown();
+initGallery();
 initAnimations();
 invitationMusic = initInvitationMusic();
 initEnvelopeIntro();

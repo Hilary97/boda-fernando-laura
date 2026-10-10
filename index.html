@@ -53,6 +53,24 @@
       </section>
 
       <section
+        class="details-section story-section cinematic-panel"
+        aria-labelledby="story-intro-title"
+      >
+        <div class="story-media" aria-hidden="true">
+          <img
+            class="story-background"
+            data-image="storyBackground"
+            alt=""
+            aria-hidden="true"
+          />
+        </div>
+        <div class="section-copy details-copy story-copy">
+          <p class="eyebrow" id="story-intro-title" data-copy="storyIntroEyebrow"></p>
+          <p class="story-text" data-copy="storyIntroText"></p>
+        </div>
+      </section>
+
+      <section
         class="details-section countdown-section cinematic-panel"
         aria-labelledby="countdown-title"
       >
@@ -113,8 +131,26 @@
       </section>
 
       <section
+        class="details-section gallery-section cinematic-panel"
+        aria-labelledby="gallery-title"
+      >
+        <div class="section-copy details-copy">
+          <p class="eyebrow" data-copy="galleryEyebrow"></p>
+          <h2 id="gallery-title" data-copy="galleryTitle"></h2>
+          <p data-copy="galleryHint"></p>
+        </div>
+
+        <div class="gallery-preview">
+          <button type="button" class="gallery-item" data-gallery-index="0"><img alt="" /></button>
+          <button type="button" class="gallery-item" data-gallery-index="1"><img alt="" /></button>
+          <button type="button" class="gallery-item" data-gallery-index="2"><img alt="" /></button>
+        </div>
+      </section>
+
+      <section
         class="details-section venue-section cinematic-panel"
         aria-labelledby="venue-title"
+        data-panel-sequence
       >
         <div class="section-copy details-copy">
           <p class="eyebrow" data-copy="venueEyebrow"></p>
@@ -124,6 +160,26 @@
 
         <div class="details-grid" aria-label="Detalles de ubicación del evento">
           <article class="detail-card">
+            <figure class="detail-card__media">
+              <img data-image="scheduleCard" alt="" />
+            </figure>
+            <p class="detail-label" data-copy="venueTimeLabel"></p>
+            <h3 data-copy="venueTime"></h3>
+            <p data-copy="venueNote"></p>
+            <a
+              class="map-button"
+              data-map-link="ceremony"
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-copy="venueMapButtonLabel"
+            ></a>
+          </article>
+
+          <article class="detail-card">
+            <figure class="detail-card__media">
+              <img data-image="venueCard" alt="" />
+            </figure>
             <p class="detail-label" data-copy="venueNameLabel"></p>
             <h3 data-copy="venueName"></h3>
             <p data-copy="venueAddress"></p>
@@ -135,12 +191,6 @@
               rel="noopener noreferrer"
               data-copy="venueMapButtonLabel"
             ></a>
-          </article>
-
-          <article class="detail-card">
-            <p class="detail-label" data-copy="venueTimeLabel"></p>
-            <h3 data-copy="venueTime"></h3>
-            <p data-copy="venueNote"></p>
           </article>
         </div>
       </section>
@@ -187,6 +237,16 @@
       <span class="music-toggle__icon" data-music-icon aria-hidden="true">♪</span>
       <span class="music-toggle__text" data-music-text>Música</span>
     </button>
+
+    <div class="gallery-lightbox" role="dialog" aria-modal="true" aria-label="Galería de fotos" data-gallery-lightbox hidden>
+      <button type="button" class="gallery-lightbox__close" data-gallery-close>&times;</button>
+      <button type="button" class="gallery-lightbox__nav gallery-lightbox__nav--prev" data-gallery-prev>&lsaquo;</button>
+      <figure class="gallery-lightbox__figure" data-gallery-figure>
+        <img alt="" data-gallery-image />
+      </figure>
+      <button type="button" class="gallery-lightbox__nav gallery-lightbox__nav--next" data-gallery-next>&rsaquo;</button>
+      <p class="gallery-lightbox__counter" data-gallery-counter aria-live="polite"></p>
+    </div>
 
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
