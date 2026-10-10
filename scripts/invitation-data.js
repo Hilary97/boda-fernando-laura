@@ -38,7 +38,7 @@ window.INVITATION_DATA = {
     venueTitle: "Nos vemos para celebrar juntos.",
     venueIntro:
       "La ceremonia y recepción tendrán un escenario íntimo y elegante para compartir la noche con quienes más queremos.",
-    venueNameLabel: "Lugar",
+    venueNameLabel: "Velada",
     venueName: "Terraza Bonanza",
     venueAddress: "Calle 5 de Mayo. Cuquio.Jal",
     venueMapButtonLabel: "Ver ubicación",
@@ -100,7 +100,7 @@ window.INVITATION_DATA = {
   },
   whatsapp: {
     number: "3334659074",
-    message: "Hola, confirmo mi asistencia gracias por invitarme ♥️.",
+    message: "Hola, confirmo mi asistencia a su boda gracias por invitarme ♥️.",
   },
   gallery: {
     // The first 3 images are the previews shown in the section; the lightbox shows all of them.
