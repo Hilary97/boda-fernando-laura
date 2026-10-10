@@ -40,7 +40,7 @@ window.INVITATION_DATA = {
       "La ceremonia y recepción tendrán un escenario íntimo y elegante para compartir la noche con quienes más queremos.",
     venueNameLabel: "Lugar",
     venueName: "Terraza Bonanza",
-    venueAddress: "Av. Celebración 123, Ciudad de México",
+    venueAddress: "Calle 5 de Mayo. Cuquio.Jal",
     venueMapButtonLabel: "Ver ubicación",
     venueTimeLabel: "Ceremonia",
     venueTime: "Templo San Felipe Apóstol · 12:00 PM",
